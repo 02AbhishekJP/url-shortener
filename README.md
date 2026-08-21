@@ -135,6 +135,28 @@ Tests use an in-memory SQLite database — no PostgreSQL required.
 pytest -v
 ```
 
+## Deploy to Render
+
+### Option 1: Blueprint (Recommended - 1-Click Setup)
+
+1. Push this repository to GitHub.
+2. Log into [Render Dashboard](https://dashboard.render.com/).
+3. Click **New +** -> **Blueprint**.
+4. Connect your GitHub repository. Render will automatically detect `render.yaml` and provision both:
+   - **PostgreSQL Database** (`url-shortener-db`)
+   - **FastAPI Web Service** (`url-shortener-api`)
+5. Click **Apply**. Render will automatically build the service, spin up PostgreSQL, link `DATABASE_URL`, and auto-detect `RENDER_EXTERNAL_URL`.
+
+### Option 2: Manual Setup on Render
+
+1. **Database**: Create a new **PostgreSQL** database on Render, copy its **Internal Database URL**.
+2. **Web Service**: Create a new **Web Service** on Render connected to this repository:
+   - **Runtime**: Python 3
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - **Environment Variables**:
+     - `DATABASE_URL`: Set to your Render PostgreSQL connection string.
+
 ## Deploy to Netlify
 
 1. Push this repo to GitHub.
@@ -148,11 +170,12 @@ pytest -v
 | Variable | Description | Default |
 |---|---|---|
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:postgres@localhost:5432/url_shortener` |
-| `BASE_URL` | Public URL for generating short links | Auto-detected on Netlify, `http://localhost:8000` locally |
+| `BASE_URL` | Public URL for generating short links | Auto-detected on Render (`RENDER_EXTERNAL_URL`) & Netlify (`URL`), `http://localhost:8000` locally |
 
 ## Design Decisions
 
 - **307 Temporary Redirect** — Allows future analytics tracking (browsers won't cache the redirect permanently).
 - **`secrets.choice`** — Cryptographically secure random code generation (62^6 = 56.8 billion possibilities).
 - **Pydantic `HttpUrl`** — Strong URL validation before persistence, preventing injection of arbitrary strings.
-- **Netlify Functions** — Serverless deployment with Netlify and Mangum handler.
+- **Render / Netlify Ready** — Deployable via Render Blueprint (`render.yaml`) or Netlify Functions (`netlify.toml`).
+

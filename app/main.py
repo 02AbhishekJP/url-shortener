@@ -65,6 +65,7 @@ async def custom_swagger_ui_html():
     return HTMLResponse(custom_html)
 
 
+@app.get("", include_in_schema=False)
 @app.get("/", include_in_schema=False)
 def root_redirect():
     """Redirect to the API documentation."""
