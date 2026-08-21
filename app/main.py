@@ -19,14 +19,11 @@ from app.database import Base, engine, get_db
 from app.schemas import URLCreate, URLResponse
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Create tables on startup if database is available."""
-    try:
-        Base.metadata.create_all(bind=engine)
-    except Exception as e:
-        print(f"Startup DB Warning: {e}")
-    yield
+# Create database tables at module import time
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print(f"Startup DB Warning: {e}")
 
 
 description = """
@@ -45,7 +42,6 @@ app = FastAPI(
     title="LOBB URL Shortener API",
     description=description,
     docs_url=None,  # Disable default docs to serve custom one
-    lifespan=lifespan,
 )
 
 
@@ -70,6 +66,7 @@ async def custom_swagger_ui_html():
 
 @app.get("", include_in_schema=False)
 @app.get("/", include_in_schema=False)
+@app.get("/api/index", include_in_schema=False)
 def root_redirect():
     """Redirect to the API documentation."""
     return RedirectResponse(url="/docs")
