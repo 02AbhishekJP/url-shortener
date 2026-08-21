@@ -1,196 +1,163 @@
 # URL Shortener API
 
-## 1. Project Title
-URL Shortener REST API
+A production-ready URL shortening service built with **FastAPI** and **PostgreSQL**. Convert long URLs into short, shareable links with instant redirects.
 
-## 2. Project Overview
-A production-ready, lightweight URL shortening service built with FastAPI and PostgreSQL. It allows users to convert long URLs into easily shareable short links and automatically redirects users who visit those short links back to the original destination.
+## Features
 
-## 3. Problem Statement
-Sharing long, complex URLs can be cumbersome in environments with character limits or when aiming for clean aesthetics. This API solves this by generating unique, shortened aliases for any valid web address.
+- **Shorten URLs** — Submit any valid URL and get a unique 6-character short code.
+- **Instant Redirects** — Visit a short link and get redirected (HTTP 307) to the original URL.
+- **Collision-Safe** — Cryptographically random codes with automatic retry on collision.
+- **URL Validation** — Pydantic-powered input validation rejects malformed URLs.
+- **Persistent Storage** — PostgreSQL-backed for reliable data persistence.
+- **Dockerized** — Full Docker Compose setup for local development.
+- **Tested** — Automated test suite using in-memory SQLite (no DB setup needed).
 
-## 4. Features
-- Create short URLs from long valid URLs.
-- Securely handles potential collisions during short code generation.
-- Validates URLs prior to processing to maintain data integrity.
-- Redirects short URLs to original URLs efficiently (HTTP 307).
-- Persistent data storage using PostgreSQL.
-- Dockerized setup for immediate execution.
-- Comprehensive automated testing.
+## Tech Stack
 
-## 5. Technology Stack
-- **Language**: Python 3.11+
-- **Framework**: FastAPI (with Uvicorn as ASGI server)
-- **Database**: PostgreSQL
-- **ORM**: SQLAlchemy 2.x
-- **Data Validation**: Pydantic
-- **Testing**: Pytest & HTTPX
-- **Containerization**: Docker & Docker Compose
+| Layer | Technology |
+|---|---|
+| Language | Python 3.11+ |
+| Framework | FastAPI + Uvicorn |
+| Database | PostgreSQL |
+| ORM | SQLAlchemy 2.x |
+| Validation | Pydantic v2 |
+| Testing | Pytest + HTTPX |
+| Deployment | Railway |
 
-## 6. Project Architecture
-The application follows a standard layered architecture for clear separation of concerns:
-- **Routing Layer (`main.py`)**: Defines API endpoints and handles HTTP requests/responses.
-- **Business Logic Layer (`crud.py`)**: Contains core application logic, including short code generation and database transactions.
-- **Data Access Layer (`database.py`, `models.py`)**: Manages the SQLAlchemy ORM models and PostgreSQL database sessions.
-- **Configuration Layer (`config.py`)**: Leverages `pydantic-settings` to manage environment variables safely.
+## Project Structure
 
-## 7. Project Folder Structure
-```text
+```
 url-shortener/
 ├── app/
-│   ├── __init__.py
-│   ├── main.py
-│   ├── database.py
-│   ├── models.py
-│   ├── schemas.py
-│   ├── crud.py
-│   └── config.py
+│   ├── __init__.py      # Package marker
+│   ├── main.py          # API endpoints & app factory
+│   ├── database.py      # Engine, session, Base class
+│   ├── models.py        # SQLAlchemy ORM models
+│   ├── schemas.py       # Pydantic request/response schemas
+│   ├── crud.py          # Business logic & DB operations
+│   └── config.py        # Environment-based settings
 ├── tests/
 │   ├── __init__.py
-│   └── test_api.py
-├── .env.example
+│   └── test_api.py      # API integration tests
+├── .env.example         # Sample environment variables
 ├── .gitignore
-├── requirements.txt
-├── Dockerfile
-├── docker-compose.yml
+├── Dockerfile           # Container image definition
+├── docker-compose.yml   # Local dev with PostgreSQL
+├── Procfile             # Railway process declaration
+├── railway.json         # Railway deployment config
+├── requirements.txt     # Python dependencies
 └── README.md
 ```
 
-## 8. Database Schema
-Table name: `urls`
+## Database Schema
+
+**Table: `urls`**
 
 | Column | Type | Constraints | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | Integer | Primary Key | Unique identifier for the record. |
-| `original_url` | Text | Not Null | The original long URL submitted by the user. |
-| `short_code` | Varchar | Unique, Not Null, Indexed | The 6-character generated short alias. |
-| `created_at` | Timestamp | Not Null | UTC Timestamp when the short link was generated. |
+|---|---|---|---|
+| `id` | Integer | Primary Key | Auto-increment identifier |
+| `original_url` | Text | Not Null | The original long URL |
+| `short_code` | Varchar(6) | Unique, Indexed, Not Null | Generated short alias |
+| `created_at` | Timestamp | Not Null | UTC creation timestamp |
 
-## 9. API Endpoints
+## API Endpoints
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/shorten` | Submits a long URL and returns a generated short code and URL. |
-| `GET` | `/{short_code}` | Redirects the client to the original URL associated with the short code. |
+### `POST /shorten`
 
-## 10. Example Requests
+Create a shortened URL.
 
-### Create a Short URL
-```bash
-curl -X 'POST' \
-  'http://localhost:8000/shorten' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
+**Request:**
+```json
+{
   "url": "https://fastapi.tiangolo.com/advanced/testing-database/"
-}'
+}
 ```
 
-### Redirect using a Short URL
-```bash
-# Using curl to view the redirect headers (it will return a 307 response)
-curl -I http://localhost:8000/aB72xK
-```
-
-## 11. Example Responses
-
-### Success (`POST /shorten`)
+**Response (201 Created):**
 ```json
 {
   "short_code": "aB72xK",
-  "short_url": "http://localhost:8000/aB72xK"
+  "short_url": "https://your-app.up.railway.app/aB72xK"
 }
 ```
 
-## 12. Error Responses
+### `GET /{short_code}`
 
-### Invalid URL submitted (`POST /shorten`) - `422 Unprocessable Entity`
-```json
-{
-  "detail": [
-    {
-      "type": "url_parsing",
-      "loc": [
-        "body",
-        "url"
-      ],
-      "msg": "Input should be a valid URL, relative URL without a base",
-      "input": "not-a-valid-url"
-    }
-  ]
-}
+Redirects to the original URL (HTTP 307).
+
+```bash
+curl -I https://your-app.up.railway.app/aB72xK
 ```
 
-### Short Code Not Found (`GET /{short_code}`) - `404 Not Found`
-```json
-{
-  "detail": "Short URL not found"
-}
-```
+### Error Responses
 
-## 13. Local Setup Instructions
-If you prefer running outside of Docker:
-1. Ensure Python 3.11+ is installed.
-2. Clone/download the repository.
-3. Create a virtual environment: `python -m venv venv`
-4. Activate the virtual environment:
-   - Windows: `venv\Scripts\activate`
-   - Linux/Mac: `source venv/bin/activate`
-5. Install dependencies: `pip install -r requirements.txt`
-6. Create an `.env` file based on `.env.example` (see Environment Variables).
+| Status | Condition | Body |
+|---|---|---|
+| `422` | Invalid URL submitted | Pydantic validation error details |
+| `404` | Short code not found | `{"detail": "Short URL not found"}` |
 
-## 14. PostgreSQL Setup
-For local execution, you must have PostgreSQL running. 
-Create a database named `url_shortener` (or name it whatever you prefer and update the `.env` file).
-Alternatively, the provided Docker Compose file automatically spins up a PostgreSQL instance.
+## Local Development
 
-## 15. Environment Variables
-Create a file named `.env` in the root directory (alongside `requirements.txt`).
-Refer to `.env.example`:
-```env
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/url_shortener
-BASE_URL=http://localhost:8000
-```
-*Note: If running via Docker Compose, you do not need to create this manually as the compose file provides the necessary environment variables to the container.*
+### Option 1: Docker Compose (Recommended)
 
-## 16. Docker Setup
-Ensure you have Docker and Docker Compose installed on your system.
-The `docker-compose.yml` configures two services:
-- `db`: PostgreSQL 15 database.
-- `api`: The FastAPI application.
-
-## 17. How to Run the Application
-
-### Using Docker Compose (Recommended)
-From the root directory of the project, run:
 ```bash
 docker compose up --build
 ```
-The API will be available at `http://localhost:8000`.
 
-### Running Locally (Without Docker)
-After completing local setup and configuring your PostgreSQL connection in `.env`, run:
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+API available at `http://localhost:8000`
 
-## 18. Swagger Documentation URL
-FastAPI automatically generates interactive API documentation. Once the application is running, navigate to:
-**http://localhost:8000/docs**
+### Option 2: Manual Setup
 
-## 19. How to Run Tests
-The tests use an in-memory SQLite database (`sqlite:///:memory:`) so they are isolated and do not require PostgreSQL to be running.
-From the root project directory, execute:
-```bash
-pytest
-```
-To run tests with output:
+1. Install Python 3.11+
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Linux/Mac
+   venv\Scripts\activate     # Windows
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Copy `.env.example` to `.env` and configure your PostgreSQL connection.
+5. Run the server:
+   ```bash
+   uvicorn app.main:app --reload --port 8000
+   ```
+
+### Interactive Docs
+
+Once running, visit **http://localhost:8000/docs** for Swagger UI.
+
+## Running Tests
+
+Tests use an in-memory SQLite database — no PostgreSQL required.
+
 ```bash
 pytest -v
 ```
 
-## 20. Design Decisions and Assumptions
-- **Testing Strategy**: Tests utilize FastAPI's `TestClient` combined with dependency injection overrides. Specifically, the `get_db` dependency is overridden to yield a session connected to an in-memory SQLite database, completely isolating tests from the production PostgreSQL environment.
-- **Short Code Algorithm**: Generated securely via `secrets.choice` selecting from 62 characters (A-Z, a-z, 0-9). While generating 6 random characters presents a low collision rate initially (62^6 possibilities), a `while` loop checks the database to prevent duplicate collisions before inserting.
-- **Redirects**: A `307 Temporary Redirect` is used instead of a `301 Permanent Redirect`. This ensures that analytics could theoretically be tracked on every click if added in the future, as the browser won't permanently cache the redirect.
-- **Security**: The application relies on Pydantic's `HttpUrl` for strong initial URL validation, preventing arbitrary inputs and ensuring data sanitation prior to persistence.
+## Deploy to Railway
+
+1. Push this repo to GitHub.
+2. Go to [railway.com](https://railway.com) and create a new project.
+3. Select **"Deploy from GitHub repo"** and connect this repository.
+4. Add a **PostgreSQL** plugin from the Railway dashboard.
+5. Railway auto-injects `DATABASE_URL` and `RAILWAY_PUBLIC_DOMAIN` — no manual env vars needed.
+6. Deploy! 🚀
+
+The app auto-detects Railway's environment and configures itself.
+
+## Environment Variables
+
+| Variable | Description | Default |
+|---|---|---|
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:postgres@localhost:5432/url_shortener` |
+| `BASE_URL` | Public URL for generating short links | Auto-detected on Railway, `http://localhost:8000` locally |
+
+## Design Decisions
+
+- **307 Temporary Redirect** — Allows future analytics tracking (browsers won't cache the redirect permanently).
+- **`secrets.choice`** — Cryptographically secure random code generation (62^6 = 56.8 billion possibilities).
+- **Pydantic `HttpUrl`** — Strong URL validation before persistence, preventing injection of arbitrary strings.
+- **Railway Nixpacks** — Zero-config deployment; auto-detects Python from `requirements.txt`.
