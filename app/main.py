@@ -50,6 +50,12 @@ app = FastAPI(
 )
 
 
+@app.get("/", include_in_schema=False)
+def root_redirect():
+    """Redirect to the API documentation."""
+    return RedirectResponse(url="/docs")
+
+
 @app.post("/shorten", response_model=URLResponse, status_code=status.HTTP_201_CREATED, tags=["URLs"])
 def shorten_url(url_in: URLCreate, db: Session = Depends(get_db)) -> URLResponse:
     """Accept a long URL and return a shortened URL."""
