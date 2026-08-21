@@ -22,7 +22,7 @@ A production-ready URL shortening service built with **FastAPI** and **PostgreSQ
 | ORM | SQLAlchemy 2.x |
 | Validation | Pydantic v2 |
 | Testing | Pytest + HTTPX |
-| Deployment | Railway |
+| Deployment | Netlify |
 
 ## Project Structure
 
@@ -41,10 +41,8 @@ url-shortener/
 │   └── test_api.py      # API integration tests
 ├── .env.example         # Sample environment variables
 ├── .gitignore
-├── Dockerfile           # Container image definition
-├── docker-compose.yml   # Local dev with PostgreSQL
-├── Procfile             # Railway process declaration
-├── railway.json         # Railway deployment config
+├── netlify/             # Netlify Functions
+├── netlify.toml         # Netlify configuration
 ├── requirements.txt     # Python dependencies
 └── README.md
 ```
@@ -77,7 +75,7 @@ Create a shortened URL.
 ```json
 {
   "short_code": "aB72xK",
-  "short_url": "https://your-app.up.railway.app/aB72xK"
+  "short_url": "https://your-app.netlify.app/aB72xK"
 }
 ```
 
@@ -86,7 +84,7 @@ Create a shortened URL.
 Redirects to the original URL (HTTP 307).
 
 ```bash
-curl -I https://your-app.up.railway.app/aB72xK
+curl -I https://your-app.netlify.app/aB72xK
 ```
 
 ### Error Responses
@@ -137,27 +135,24 @@ Tests use an in-memory SQLite database — no PostgreSQL required.
 pytest -v
 ```
 
-## Deploy to Railway
+## Deploy to Netlify
 
 1. Push this repo to GitHub.
-2. Go to [railway.com](https://railway.com) and create a new project.
-3. Select **"Deploy from GitHub repo"** and connect this repository.
-4. Add a **PostgreSQL** plugin from the Railway dashboard.
-5. Railway auto-injects `DATABASE_URL` and `RAILWAY_PUBLIC_DOMAIN` — no manual env vars needed.
-6. Deploy! 🚀
-
-The app auto-detects Railway's environment and configures itself.
+2. Go to [netlify.com](https://netlify.com) and create a new site from GitHub.
+3. Netlify auto-detects `netlify.toml` and configures function routing.
+4. Set required environment variables (e.g. `DATABASE_URL`) in Netlify Site Configuration.
+5. Deploy! 🚀
 
 ## Environment Variables
 
 | Variable | Description | Default |
 |---|---|---|
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:postgres@localhost:5432/url_shortener` |
-| `BASE_URL` | Public URL for generating short links | Auto-detected on Railway, `http://localhost:8000` locally |
+| `BASE_URL` | Public URL for generating short links | Auto-detected on Netlify, `http://localhost:8000` locally |
 
 ## Design Decisions
 
 - **307 Temporary Redirect** — Allows future analytics tracking (browsers won't cache the redirect permanently).
 - **`secrets.choice`** — Cryptographically secure random code generation (62^6 = 56.8 billion possibilities).
 - **Pydantic `HttpUrl`** — Strong URL validation before persistence, preventing injection of arbitrary strings.
-- **Railway Nixpacks** — Zero-config deployment; auto-detects Python from `requirements.txt`.
+- **Netlify Functions** — Serverless deployment with Netlify and Mangum handler.

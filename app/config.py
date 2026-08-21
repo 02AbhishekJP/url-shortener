@@ -5,11 +5,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def _resolve_base_url() -> str:
-    """Auto-detect the public base URL from Railway or fall back to localhost."""
-    railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN")
-    if railway_domain:
-        return f"https://{railway_domain}"
+    """Auto-detect the public base URL from Netlify or fall back to localhost."""
+    netlify_url = os.getenv("URL")
+    if netlify_url:
+        return netlify_url
     return os.getenv("BASE_URL", "http://localhost:8000")
+
 
 
 class Settings(BaseSettings):

@@ -35,19 +35,34 @@ A powerful and lightweight URL Shortening service. 🚀
 * **Collision-Safe**: Built-in mechanisms to prevent short code duplication.
 """
 
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.responses import HTMLResponse
+
 app = FastAPI(
     title="LOBB URL Shortener API",
     description=description,
-    version="1.0.0",
-    contact={
-        "name": "LOBB Developer Support",
-        "url": "https://github.com/02AbhishekJP",
-    },
-    license_info={
-        "name": "MIT License",
-    },
+    docs_url=None,  # Disable default docs to serve custom one
     lifespan=lifespan,
 )
+
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    """Serve custom Swagger UI with specific elements hidden via CSS."""
+    html_response = get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title=app.title + " - Swagger UI"
+    )
+    # Inject custom CSS to hide the /openapi.json link, version, and OAS badge
+    custom_css = """
+    <style>
+        .swagger-ui .info .url { display: none !important; }
+        .swagger-ui .info .version-stamp { display: none !important; }
+        .swagger-ui .info .version { display: none !important; }
+    </style>
+    """
+    custom_html = html_response.body.decode("utf-8").replace("</head>", custom_css + "</head>")
+    return HTMLResponse(custom_html)
 
 
 @app.get("/", include_in_schema=False)
