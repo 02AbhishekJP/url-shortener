@@ -16,8 +16,18 @@ def _resolve_base_url() -> str:
 
 
 
+def _resolve_database_url() -> str:
+    """Detect DATABASE_URL from environment or fall back to SQLite if not set."""
+    db_url = os.getenv("DATABASE_URL")
+    if db_url:
+        return db_url
+    if os.getenv("NETLIFY") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+        return "sqlite:////tmp/url_shortener.db"
+    return "sqlite:///./url_shortener.db"
+
+
 class Settings(BaseSettings):
-    database_url: str = "postgresql://postgres:postgres@localhost:5432/url_shortener"
+    database_url: str = _resolve_database_url()
     base_url: str = _resolve_base_url()
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
