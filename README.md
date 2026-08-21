@@ -135,16 +135,24 @@ Tests use an in-memory SQLite database — no PostgreSQL required.
 pytest -v
 ```
 
+## Deploy to Render (Recommended for FastAPI + PostgreSQL)
+
+### 1-Click Blueprint Setup
+
+1. Push this repository to GitHub.
+2. Log into [Render Dashboard](https://dashboard.render.com/).
+3. Click **New +** -> **Blueprint**.
+4. Connect your GitHub repository (`url-shortener`).
+5. Render auto-detects `render.yaml` and provisions both your **FastAPI Web Service** and **PostgreSQL Database** automatically!
+6. Click **Apply**! 🚀
+
 ## Deploy to Netlify
 
 1. Push this repository to GitHub.
 2. Go to [Netlify Dashboard](https://app.netlify.com) and click **Add new site** -> **Import an existing project**.
 3. Select GitHub and connect your repository (`url-shortener`).
-4. Netlify will auto-detect `netlify.toml` and configure the build settings automatically:
-   - **Functions directory**: `netlify/functions`
-   - **Publish directory**: `.`
-5. Under **Environment variables**, set:
-   - `DATABASE_URL`: Your production PostgreSQL database connection string (e.g. Supabase, Neon, ElephantSQL, etc.).
+4. Netlify will auto-detect `netlify.toml` and configure build settings.
+5. Under **Environment variables**, set `DATABASE_URL` (e.g. Supabase, Neon, etc.).
 6. Click **Deploy site**! 🚀
 
 ## Environment Variables
@@ -152,12 +160,12 @@ pytest -v
 | Variable | Description | Default |
 |---|---|---|
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:postgres@localhost:5432/url_shortener` |
-| `BASE_URL` | Public URL for generating short links | Auto-detected on Netlify (`URL`), `http://localhost:8000` locally |
+| `BASE_URL` | Public URL for generating short links | Auto-detected on Render (`RENDER_EXTERNAL_URL`) & Netlify (`URL`), `http://localhost:8000` locally |
 
 ## Design Decisions
 
 - **307 Temporary Redirect** — Allows future analytics tracking (browsers won't cache the redirect permanently).
 - **`secrets.choice`** — Cryptographically secure random code generation (62^6 = 56.8 billion possibilities).
 - **Pydantic `HttpUrl`** — Strong URL validation before persistence, preventing injection of arbitrary strings.
-- **Netlify Functions** — Serverless deployment using Netlify Functions and Mangum ASGI adapter.
+- **Render / Netlify Ready** — Deployable via Render Blueprint (`render.yaml`) or Netlify Functions (`netlify.toml`).
 
