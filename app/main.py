@@ -21,8 +21,11 @@ from app.schemas import URLCreate, URLResponse
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Create tables on startup (use Alembic in production)."""
-    Base.metadata.create_all(bind=engine)
+    """Create tables on startup if database is available."""
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"Startup DB Warning: {e}")
     yield
 
 
