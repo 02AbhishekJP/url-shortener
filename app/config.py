@@ -5,7 +5,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def _resolve_base_url() -> str:
-    """Auto-detect the public base URL from Render, Netlify, or fall back to localhost."""
+    """Auto-detect the public base URL from Vercel, Render, Netlify, or fall back to localhost."""
+    vercel_url = os.getenv("VERCEL_URL")
+    if vercel_url:
+        return vercel_url if vercel_url.startswith("http") else f"https://{vercel_url}"
     render_url = os.getenv("RENDER_EXTERNAL_URL")
     if render_url:
         return render_url
@@ -15,13 +18,12 @@ def _resolve_base_url() -> str:
     return os.getenv("BASE_URL", "http://localhost:8000")
 
 
-
 def _resolve_database_url() -> str:
     """Detect DATABASE_URL from environment or fall back to SQLite if not set."""
     db_url = os.getenv("DATABASE_URL")
     if db_url:
         return db_url
-    if os.getenv("NETLIFY") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+    if os.getenv("VERCEL") or os.getenv("NETLIFY") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
         return "sqlite:////tmp/url_shortener.db"
     return "sqlite:///./url_shortener.db"
 
