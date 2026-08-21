@@ -1,7 +1,7 @@
 databases:
   - name: url_shortener_db
     databaseName: url_shortener
-    user: postgres
+    user: url_shortener_user
     plan: free
 
 services:
