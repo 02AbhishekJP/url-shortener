@@ -26,15 +26,31 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
 
 
+description = """
+A powerful and lightweight URL Shortening service. 🚀
+
+## Features
+* **Shorten URLs**: Submit any valid long URL and receive a compact, shareable short link.
+* **Instant Redirection**: Navigate to the short link and get instantly redirected to the original destination.
+* **Collision-Safe**: Built-in mechanisms to prevent short code duplication.
+"""
+
 app = FastAPI(
-    title="URL Shortener API",
-    description="A URL shortening service built with FastAPI and PostgreSQL.",
+    title="LOBB URL Shortener API",
+    description=description,
     version="1.0.0",
+    contact={
+        "name": "LOBB Developer Support",
+        "url": "https://github.com/02AbhishekJP",
+    },
+    license_info={
+        "name": "MIT License",
+    },
     lifespan=lifespan,
 )
 
 
-@app.post("/shorten", response_model=URLResponse, status_code=status.HTTP_201_CREATED)
+@app.post("/shorten", response_model=URLResponse, status_code=status.HTTP_201_CREATED, tags=["URLs"])
 def shorten_url(url_in: URLCreate, db: Session = Depends(get_db)) -> URLResponse:
     """Accept a long URL and return a shortened URL."""
     db_url = create_short_url(db=db, url=url_in)
@@ -42,7 +58,7 @@ def shorten_url(url_in: URLCreate, db: Session = Depends(get_db)) -> URLResponse
     return URLResponse(short_code=db_url.short_code, short_url=short_url)
 
 
-@app.get("/{short_code}", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+@app.get("/{short_code}", status_code=status.HTTP_307_TEMPORARY_REDIRECT, tags=["Redirects"])
 def redirect_to_url(short_code: str, db: Session = Depends(get_db)) -> RedirectResponse:
     """Look up the short code and redirect to the original URL. Returns 404 if not found."""
     db_url = get_url_by_short_code(db=db, short_code=short_code)
