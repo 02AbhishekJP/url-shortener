@@ -135,47 +135,29 @@ Tests use an in-memory SQLite database — no PostgreSQL required.
 pytest -v
 ```
 
-## Deploy to Render
-
-### Option 1: Blueprint (Recommended - 1-Click Setup)
-
-1. Push this repository to GitHub.
-2. Log into [Render Dashboard](https://dashboard.render.com/).
-3. Click **New +** -> **Blueprint**.
-4. Connect your GitHub repository. Render will automatically detect `render.yaml` and provision both:
-   - **PostgreSQL Database** (`url-shortener-db`)
-   - **FastAPI Web Service** (`url-shortener-api`)
-5. Click **Apply**. Render will automatically build the service, spin up PostgreSQL, link `DATABASE_URL`, and auto-detect `RENDER_EXTERNAL_URL`.
-
-### Option 2: Manual Setup on Render
-
-1. **Database**: Create a new **PostgreSQL** database on Render, copy its **Internal Database URL**.
-2. **Web Service**: Create a new **Web Service** on Render connected to this repository:
-   - **Runtime**: Python 3
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   - **Environment Variables**:
-     - `DATABASE_URL`: Set to your Render PostgreSQL connection string.
-
 ## Deploy to Netlify
 
-1. Push this repo to GitHub.
-2. Go to [netlify.com](https://netlify.com) and create a new site from GitHub.
-3. Netlify auto-detects `netlify.toml` and configures function routing.
-4. Set required environment variables (e.g. `DATABASE_URL`) in Netlify Site Configuration.
-5. Deploy! 🚀
+1. Push this repository to GitHub.
+2. Go to [Netlify Dashboard](https://app.netlify.com) and click **Add new site** -> **Import an existing project**.
+3. Select GitHub and connect your repository (`url-shortener`).
+4. Netlify will auto-detect `netlify.toml` and configure the build settings automatically:
+   - **Functions directory**: `netlify/functions`
+   - **Publish directory**: `.`
+5. Under **Environment variables**, set:
+   - `DATABASE_URL`: Your production PostgreSQL database connection string (e.g. Supabase, Neon, ElephantSQL, etc.).
+6. Click **Deploy site**! 🚀
 
 ## Environment Variables
 
 | Variable | Description | Default |
 |---|---|---|
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:postgres@localhost:5432/url_shortener` |
-| `BASE_URL` | Public URL for generating short links | Auto-detected on Render (`RENDER_EXTERNAL_URL`) & Netlify (`URL`), `http://localhost:8000` locally |
+| `BASE_URL` | Public URL for generating short links | Auto-detected on Netlify (`URL`), `http://localhost:8000` locally |
 
 ## Design Decisions
 
 - **307 Temporary Redirect** — Allows future analytics tracking (browsers won't cache the redirect permanently).
 - **`secrets.choice`** — Cryptographically secure random code generation (62^6 = 56.8 billion possibilities).
 - **Pydantic `HttpUrl`** — Strong URL validation before persistence, preventing injection of arbitrary strings.
-- **Render / Netlify Ready** — Deployable via Render Blueprint (`render.yaml`) or Netlify Functions (`netlify.toml`).
+- **Netlify Functions** — Serverless deployment using Netlify Functions and Mangum ASGI adapter.
 

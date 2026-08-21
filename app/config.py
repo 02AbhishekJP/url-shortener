@@ -5,10 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def _resolve_base_url() -> str:
-    """Auto-detect the public base URL from Render, Netlify or fall back to localhost."""
-    render_url = os.getenv("RENDER_EXTERNAL_URL")
-    if render_url:
-        return render_url
+    """Auto-detect the public base URL from Netlify or fall back to BASE_URL / localhost."""
     netlify_url = os.getenv("URL")
     if netlify_url:
         return netlify_url
