@@ -41,32 +41,12 @@ from fastapi.responses import HTMLResponse
 app = FastAPI(
     title="LOBB URL Shortener API",
     description=description,
-    docs_url=None,  # Disable default docs to serve custom one
+    docs_url="/docs",
 )
-
-
-@app.get("/docs", include_in_schema=False)
-async def custom_swagger_ui_html():
-    """Serve custom Swagger UI with specific elements hidden via CSS."""
-    html_response = get_swagger_ui_html(
-        openapi_url=app.openapi_url,
-        title=app.title + " - Swagger UI"
-    )
-    # Inject custom CSS to hide the /openapi.json link, version, and OAS badge
-    custom_css = """
-    <style>
-        .swagger-ui .info .url { display: none !important; }
-        .swagger-ui .info .version-stamp { display: none !important; }
-        .swagger-ui .info .version { display: none !important; }
-    </style>
-    """
-    custom_html = html_response.body.decode("utf-8").replace("</head>", custom_css + "</head>")
-    return HTMLResponse(custom_html)
 
 
 @app.get("", include_in_schema=False)
 @app.get("/", include_in_schema=False)
-@app.get("/api/index", include_in_schema=False)
 def root_redirect():
     """Redirect to the API documentation."""
     return RedirectResponse(url="/docs")
