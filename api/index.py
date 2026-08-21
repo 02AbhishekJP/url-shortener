@@ -1,5 +1,10 @@
-"""Vercel Serverless Function entry point for FastAPI."""
+import sys
+import os
+from pathlib import Path
+
+# Add project root directory to sys.path so 'app' package can be found by Vercel's Python runtime
+root_dir = Path(__file__).resolve().parent.parent
+if str(root_dir) not in sys.path:
+    sys.path.insert(0, str(root_dir))
 
 from app.main import app
-
-# Vercel's Python runtime imports `app` from this file.
